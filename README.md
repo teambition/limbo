@@ -10,6 +10,9 @@ Data/Message Proxy Middleware
 * Listen for the data's change and emit events.
 * A rpc server for querying mongodb.
 
+## Connectors
+* `navive`
+
 ## Dependencies
 * `mongoose` limbo is based on [mongodb](http://www.mongodb.org) and use [mongoose](https://github.com/LearnBoost/mongoose).
 * `axon/axon-rpc` limbo use [axon](https://github.com/visionmedia/axon) as message-oriented middleware, and use [axon](https://github.com/visionmedia/axon-rpc) as rpc middleware.

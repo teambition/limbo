@@ -1,4 +1,3 @@
-/.compile.pid
 lib-cov
 *.seed
 *.log
@@ -14,4 +13,3 @@ results
 
 npm-debug.log
 node_modules
-test/private/
