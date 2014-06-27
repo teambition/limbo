@@ -1,5 +1,6 @@
 should = require 'should'
-mongoose = require('mongoose').createConnection '192.168.0.21/test'
+mongoDsn = process.env.MONGO_DSN or '192.168.0.21/test'
+mongoose = require('mongoose').createConnection mongoDsn
 limbo = require '../'
 
 UserSchema = (Schema) ->
@@ -20,7 +21,7 @@ describe 'Limbo', ->
 
   # Get mongoose schemas and initial mongo provider
   it 'should load schemas and get a connecter instance', ->
-    conn = limbo.use('test').connect('192.168.0.21/test')
+    conn = limbo.use('test').connect mongoDsn
     # Load single schema
     conn.load 'User', UserSchema
     conn.should.have.properties 'user'
@@ -63,7 +64,7 @@ describe 'Limbo', ->
       .provider 'mongo'
       .use 'test'
       .manager Manager
-      .connect '192.168.0.21/test'
+      .connect mongoDsn
       .load 'Pet', PetSchema
     conn.pet.createDog (err, dog) ->
       dog.should.have.properties '_id', 'type', 'age'
