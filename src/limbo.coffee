@@ -1,3 +1,5 @@
+server = require './server'
+
 class Limbo
 
   constructor: ->
@@ -12,5 +14,9 @@ class Limbo
     return provider
 
   provider: (@_providerName) -> this
+
+  bind: ->
+    server.bind.apply server, arguments
+    return this
 
 module.exports = new Limbo

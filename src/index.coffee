@@ -1,1 +1,3 @@
-module.exports = require './limbo'
+limbo = require './limbo'
+limbo.Manager = require './manager'
+module.exports = limbo
