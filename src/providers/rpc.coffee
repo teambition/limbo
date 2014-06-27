@@ -1,3 +1,9 @@
 class Rpc
 
-module.exports = new Rpc
+  constructor: ->
+
+  connect: (dsn) ->
+
+  call: (method, args...) ->
+
+module.exports = Rpc
