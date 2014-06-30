@@ -4,6 +4,8 @@ Manager = require '../manager'
 
 class Mongo
 
+  limbo = require '../limbo'
+
   constructor: (@_group) ->
     @_Manager = Manager
     @_isConnected = false
@@ -40,9 +42,30 @@ class Mongo
   enableRpc: ->
     for managerName, manager of @_managers
       for methodName, method of manager
-        if typeof method is 'function'
-          do (managerName, methodName, manager) =>
-            server.expose "#{@_group}.#{managerName}.#{methodName}", ->
-              manager[methodName].apply manager, arguments
+        @_bindRpcMethods(managerName, methodName, manager) if typeof method is 'function'
+
+  # Bind rpc method and emit an event when the callback be called
+  # The event name is same as rpc method name 'local.use.findOne'
+  _bindRpcMethods: (managerName, methodName, manager) ->
+    eventName = "#{@_group}.#{managerName}.#{methodName}"
+    server.expose eventName, ->
+
+      _emit = ->
+        args = (v for k, v of arguments)
+        args.unshift eventName
+        limbo.emit.apply limbo, args
+
+      callback = arguments[arguments.length - 1]
+      if typeof callback is 'function'
+        _callback = =>
+          _emit.apply this, arguments
+          callback.apply this, arguments
+        arguments[arguments.length - 1] = _callback
+      else
+        _callback = =>
+          _emit.apply this, arguments
+        arguments[arguments.length] = _callback
+
+      manager[methodName].apply manager, arguments
 
 module.exports = Mongo

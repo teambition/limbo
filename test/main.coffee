@@ -40,15 +40,22 @@ describe 'Limbo', ->
   it 'should enable an rpc server by `enableRpc` function', ->
     limbo.bind(7001).use('test').enableRpc()
 
-  # Call rpc methods
+  # Call rpc methods and emit an event of same name in server side
   it 'should call rpc method and get back the user named Alice', (done) ->
     delete limbo._providers['test']  # This is a badly hack, don't use this way in any case.
     conn = limbo.provider('rpc').use('test').connect('tcp://localhost:7001')
+
+    num = 0
+    _callback = (err, user) ->
+      num += 1
+      return if num > 2
+      user.should.have.properties '_id', 'name', 'email'
+      done(err) if num is 2
+
+    limbo.on 'test.user.findOne', _callback
     conn.call 'user.findOne',
       name: 'Alice'
-    , (err, user) ->
-      user.should.have.properties '_id', 'name', 'email'
-      done err
+    , _callback
 
   it 'should define a method in manager and call this method', (done) ->
     class Manager extends limbo.Manager

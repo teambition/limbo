@@ -1,6 +1,7 @@
 server = require './server'
+{EventEmitter} = require 'events'
 
-class Limbo
+class Limbo extends EventEmitter
 
   constructor: ->
     @_providers = {}
