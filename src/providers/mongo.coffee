@@ -16,7 +16,7 @@ class Mongo
   # e.g. mongodb://localhost:27017/test
   connect: (dsn) ->
     unless @_isConnected
-      @mongoose = mongoose.createConnection dsn
+      @conn = mongoose.createConnection dsn
       @_isConnected = true
     return this
 
@@ -34,7 +34,7 @@ class Mongo
 
   _loadManager: (modelName, schema) ->
     schema = schema(mongoose.Schema) if typeof schema is 'function'
-    model = @mongoose.model modelName, schema
+    model = @conn.model modelName, schema
     managerName = modelName.toLowerCase()
     manager = new @_Manager model
     @[managerName] = manager
