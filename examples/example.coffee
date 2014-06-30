@@ -49,3 +49,11 @@ conn3 = limbo
   .connect('192.168.0.21/test')
 
 conn3.user.getAlice (err, user) -> console.log user
+
+# Listen on the event of data manipulations by rpc methods
+limbo.on 'test.user.findOne', (err, user) ->
+  console.log user
+
+limbo.use('test').call 'user.findOne'
+  name: 'Alice'
+, (err, user) ->

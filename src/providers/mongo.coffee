@@ -12,12 +12,19 @@ class Mongo
     @_isRpcEnabled = false
     @_managers = {}
 
+  # Dsn of mongo connection
+  # e.g. mongodb://localhost:27017/test
   connect: (dsn) ->
     unless @_isConnected
       @mongoose = mongoose.createConnection dsn
       @_isConnected = true
     return this
 
+  # Load mongoose schemas
+  # @param `modelName` name of model, the first character is prefered uppercase
+  # @param `schema` the mongoose schema instance
+  # You can directly set an hash object to this method and it will
+  # load all schemas in the object
   load: (modelName, schema) ->
     if arguments.length is 1
       @_loadManager(_modelName, schema) for _modelName, schema of modelName
@@ -40,9 +47,12 @@ class Mongo
   # Every model method will be exposed as 'group.model.method'
   # e.g. UserModel.findOne in group 'local' will be exposed as 'local.user.findOne'
   enableRpc: ->
-    for managerName, manager of @_managers
-      for methodName, method of manager
-        @_bindRpcMethods(managerName, methodName, manager) if typeof method is 'function'
+    unless @_isRpcEnabled
+      for managerName, manager of @_managers
+        for methodName, method of manager
+          @_bindRpcMethods(managerName, methodName, manager) if typeof method is 'function'
+      @_isRpcEnabled = true
+    return this
 
   # Bind rpc method and emit an event when the callback be called
   # The event name is same as rpc method name 'local.use.findOne'
