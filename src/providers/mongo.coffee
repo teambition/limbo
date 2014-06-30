@@ -33,12 +33,13 @@ class Mongo
     return this
 
   _loadManager: (modelName, schema) ->
-    schema = schema(mongoose.Schema) if typeof schema is 'function'
-    model = @conn.model modelName, schema
     managerName = modelName.toLowerCase()
-    manager = new @_Manager model
-    @[managerName] = manager
-    @_managers[managerName] = manager
+    unless @_managers[managerName]
+      schema = schema(mongoose.Schema) if typeof schema is 'function'
+      model = @conn.model modelName, schema
+      manager = new @_Manager model
+      @[managerName] = manager
+      @_managers[managerName] = manager
     return this
 
   # Set your manager
