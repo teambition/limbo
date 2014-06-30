@@ -1,9 +1,7 @@
-limbo
+limbo [![NPM version][npm-image]][npm-url] [![Build Status][travis-image]][travis-url]
 =====
 
 Data/Message Proxy Middleware
-
-[![build status](https://api.travis-ci.org/teambition/limbo.png)](https://travis-ci.org/teambition/limbo)
 
 # Deal with what
 * A rpc server for querying mongodb.
@@ -36,3 +34,9 @@ See examples directory
 
 # Licence
 MIT
+
+[npm-url]: https://npmjs.org/package/limbo
+[npm-image]: http://img.shields.io/npm/v/limbo.svg
+
+[travis-url]: https://travis-ci.org/teambition/limbo
+[travis-image]: http://img.shields.io/travis/teambition/limbo.svg
