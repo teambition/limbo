@@ -22,6 +22,9 @@ See examples directory
 # Example
 
 # Changelog
+## 0.1.4
+* the managers extends limbo.Manager will bind all methods to the manager itself.
+
 ## 0.0.3
 * event support for rpc call
 
