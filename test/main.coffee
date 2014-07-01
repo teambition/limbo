@@ -90,4 +90,21 @@ describe 'Limbo', ->
       dog.age.should.eql 1
       done err
 
+  it 'this should not be changed in managers', (done) ->
+    class Manager extends limbo.Manager
+
+      findOne: ->
+        @model.findOne.apply @model, arguments
+
+    limbo1 = new limbo.Limbo
+    conn = limbo1
+      .provider 'mongo'
+      .use 'test'
+      .manager Manager
+      .connect mongoDsn
+      .load 'Pet', PetSchema
+    findOne = ->
+      query = conn.pet.findOne.apply this, arguments
+    findOne {}, (err) -> done err
+
   after util.dropDb
