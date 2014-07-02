@@ -59,7 +59,7 @@ class Mongo
     unless @_isRpcEnabled
       for managerName, manager of @_managers
         for methodName, method of manager
-          @_bindRpcMethods(managerName, methodName, manager) if typeof method is 'function'
+          @_bindRpcMethods(managerName, methodName, manager) if typeof method is 'function' and methodName.indexOf('_') isnt 0
       @_isRpcEnabled = true
     return this
 

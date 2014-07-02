@@ -23,6 +23,7 @@ Data/Message Proxy Middleware
 ## 0.1.5
 * move `bind` method to mongo provider
 * support connect to different ports in different rpc instance
+* remove `_methods` in exposed methods
 
 ## 0.1.4
 * the managers extends limbo.Manager will bind all methods to the manager itself.
