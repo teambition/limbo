@@ -1,21 +1,22 @@
-client = require '../client'
+Client = require '../client'
 
 class Rpc
 
   constructor: (@_group) ->
     @_isConnected = false
+    @_client = new Client
 
   connect: (dsn) ->
     unless @_isConnected
-      client.connect dsn
+      @_client.connect dsn
       @_isConnected = true
     return this
 
   call: (method) ->
     method = "#{@_group}.#{method}"
     arguments[0] = method
-    client.call.apply client, arguments
+    @_client.call.apply @_client, arguments
 
-  methods: -> client.methods.apply client, arguments
+  methods: -> @_client.methods.apply @_client, arguments
 
 module.exports = Rpc

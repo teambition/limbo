@@ -1,5 +1,5 @@
 mongoose = require 'mongoose'
-server = require '../server'
+Server = require '../server'
 Manager = require '../manager'
 
 class Mongo
@@ -10,6 +10,8 @@ class Mongo
     @_Manager = Manager
     @_isConnected = false
     @_isRpcEnabled = false
+    @_isBound = false
+    @_server = new Server
     @_managers = {}
 
   # Dsn of mongo connection
@@ -18,6 +20,12 @@ class Mongo
     unless @_isConnected
       @conn = mongoose.createConnection dsn
       @_isConnected = true
+    return this
+
+  bind: ->
+    unless @_isBound
+      @_server.bind.apply @_server, arguments
+      @_isBound = true
     return this
 
   # Load mongoose schemas
@@ -59,7 +67,7 @@ class Mongo
   # The event name is same as rpc method name 'local.use.findOne'
   _bindRpcMethods: (managerName, methodName, manager) ->
     eventName = "#{@_group}.#{managerName}.#{methodName}"
-    server.expose eventName, ->
+    @_server.expose eventName, ->
 
       _emit = ->
         args = (v for k, v of arguments)

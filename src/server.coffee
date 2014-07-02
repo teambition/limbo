@@ -1,8 +1,14 @@
 axon = require 'axon'
 rpc = require 'axon-rpc'
-rep = axon.socket 'rep'
-server = new rpc.Server rep
 
-server.bind = -> rep.bind.apply rep, arguments
+class Server
 
-module.exports = server
+  constructor: ->
+    @_rep = axon.socket 'rep'
+    @_server = new rpc.Server @_rep
+
+  bind: -> @_rep.bind.apply @_rep, arguments
+
+  expose: -> @_server.expose.apply @_server, arguments
+
+module.exports = Server

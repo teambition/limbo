@@ -20,6 +20,10 @@ Data/Message Proxy Middleware
 [example.coffee](https://github.com/teambition/limbo/blob/master/examples/example.coffee)
 
 # Changelog
+## 0.1.5
+* move `bind` method to mongo provider
+* support connect to different ports in different rpc instance
+
 ## 0.1.4
 * the managers extends limbo.Manager will bind all methods to the manager itself.
 

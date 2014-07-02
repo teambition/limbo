@@ -21,11 +21,6 @@ class Limbo extends EventEmitter
   # Set the provider name: (default)mongo / rpc
   provider: (@_providerName) -> this
 
-  # Limbo rpc server should bind to a port
-  bind: ->
-    server.bind.apply server, arguments
-    return this
-
 limbo = new Limbo
 limbo.Limbo = Limbo
 

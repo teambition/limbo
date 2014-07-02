@@ -22,89 +22,128 @@ describe 'Limbo', ->
 
   # Initial limbo
   before ->
-    limbo.bind 7001
-      .use 'test'
+    limbo.use 'test'
+      .bind 7001
       .connect mongoDsn
       .load 'User', UserSchema
       .enableRpc()
 
-  # Get mongoose schemas and initial mongo provider
-  it 'should load schemas and get a connecter instance', ->
-    limbo1 = new limbo.Limbo
-    conn = limbo1.use('test').connect mongoDsn
-    # Load single schema
-    conn.load 'User', UserSchema
-    conn.should.have.properties 'user'
+  describe 'LoadSchema', ->
 
-  # Create user
-  it 'should create user by mongo provider', (done) ->
-    limbo1 = new limbo.Limbo
-    conn = limbo1.use('test').connect(mongoDsn).load 'User', UserSchema
-    conn.user.create
-      name: 'Alice'
-      email: 'alice@gmail.com'
-    , (err, user) ->
-      user.should.have.properties '_id', 'name', 'email'
-      done err
+    # Get mongoose schemas and initial mongo provider
+    it 'should load schemas and get a connecter instance', ->
+      _limbo = new limbo.Limbo
+      conn = _limbo.use('test').connect mongoDsn
+      # Load single schema
+      conn.load 'User', UserSchema
+      conn.should.have.properties 'user'
 
-  # Enable rpc server
-  # Call rpc methods and emit an event of same name in server side
-  it 'should call rpc method and get back the user named Alice', (done) ->
-    limbo1 = new limbo.Limbo
-    conn = limbo1
-      .provider 'rpc'
-      .use 'test'
-      .connect rpcDsn
+  describe 'MongoProvider', ->
 
-    num = 0
-    _callback = (err, user) ->
-      num += 1
-      return if num > 2
-      user.should.have.properties '_id', 'name', 'email'
-      done(err) if num is 2
+    # Create user
+    it 'should create user by mongo provider', (done) ->
+      _limbo = new limbo.Limbo
+      conn = _limbo.use('test').connect(mongoDsn).load 'User', UserSchema
+      conn.user.create
+        name: 'Alice'
+        email: 'alice@gmail.com'
+      , (err, user) ->
+        user.should.have.properties '_id', 'name', 'email'
+        done err
 
-    limbo.on 'test.user.findOne', _callback
+  describe 'RpcProvider', ->
 
-    conn.call 'user.findOne',
-      name: 'Alice'
-    , _callback
+    # Enable rpc server
+    # Call rpc methods and emit an event of same name in server side
+    it 'should call rpc method and get back the user named Alice', (done) ->
+      _limbo = new limbo.Limbo
+      conn = _limbo
+        .provider 'rpc'
+        .use 'test'
+        .connect rpcDsn
 
-  it 'should define a method in manager and call this method', (done) ->
-    class Manager extends limbo.Manager
+      num = 0
+      _callback = (err, user) ->
+        num += 1
+        return if num > 2
+        user.should.have.properties '_id', 'name', 'email'
+        done(err) if num is 2
 
-      createDog: (callback) ->
-        @model.create
-          type: 'dog'
-          age: 1
-        , callback
+      limbo.on 'test.user.findOne', _callback
 
-    limbo1 = new limbo.Limbo
-    conn = limbo1
-      .provider 'mongo'
-      .use 'test'
-      .manager Manager
-      .connect mongoDsn
-      .load 'Pet', PetSchema
-    conn.pet.createDog (err, dog) ->
-      dog.should.have.properties '_id', 'type', 'age'
-      dog.age.should.eql 1
-      done err
+      conn.call 'user.findOne',
+        name: 'Alice'
+      , _callback
 
-  it 'this should not be changed in managers', (done) ->
-    class Manager extends limbo.Manager
+  describe 'CustomManager', ->
 
-      findOne: ->
-        @model.findOne.apply @model, arguments
+    it 'should define a method in manager and call this method', (done) ->
+      class Manager extends limbo.Manager
 
-    limbo1 = new limbo.Limbo
-    conn = limbo1
-      .provider 'mongo'
-      .use 'test'
-      .manager Manager
-      .connect mongoDsn
-      .load 'Pet', PetSchema
-    findOne = ->
-      query = conn.pet.findOne.apply this, arguments
-    findOne {}, (err) -> done err
+        createDog: (callback) ->
+          @model.create
+            type: 'dog'
+            age: 1
+          , callback
+
+      _limbo = new limbo.Limbo
+      conn = _limbo
+        .provider 'mongo'
+        .use 'test'
+        .manager Manager
+        .connect mongoDsn
+        .load 'Pet', PetSchema
+      conn.pet.createDog (err, dog) ->
+        dog.should.have.properties '_id', 'type', 'age'
+        dog.age.should.eql 1
+        done err
+
+  describe 'BindManager', ->
+
+    it 'this should not be changed in managers', (done) ->
+      class Manager extends limbo.Manager
+
+        findOne: ->
+          @model.findOne.apply @model, arguments
+
+      _limbo = new limbo.Limbo
+      conn = _limbo
+        .provider 'mongo'
+        .use 'test'
+        .manager Manager
+        .connect mongoDsn
+        .load 'Pet', PetSchema
+      findOne = ->
+        query = conn.pet.findOne.apply this, arguments
+      findOne {}, (err) -> done err
+
+  describe 'MultiPorts', ->
+
+    before ->
+      limbo.use 'test1'
+        .bind 7002
+        .connect mongoDsn
+        .load 'Pet', PetSchema
+        .enableRpc()
+
+    it 'should connect to different ports in different groups', (done) ->
+      _limbo = new limbo.Limbo
+      conn1 = _limbo.provider 'rpc'
+        .use 'test'
+        .connect 7001
+      conn2 = _limbo.provider 'rpc'
+        .use 'test1'
+        .connect 7002
+
+      num = 0
+      _callback = (methods, match, notMatch) ->
+        num += 1
+        Object.keys(methods).forEach (method) ->
+          method.should.match match
+          method.should.not.match notMatch
+        done() if num is 2
+
+      conn1.methods (err, methods) -> _callback methods, /^test\.user/, /^test1\.pet/
+      conn2.methods (err, methods) -> _callback methods, /^test1\.pet/, /^test\.user/
 
   after util.dropDb

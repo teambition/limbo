@@ -19,7 +19,7 @@ conn1.user.create
 
 # Or connect to the rpc server and query by rpc methods
 # First enable the rpc server
-limbo.bind(7001).use('test').enableRpc()
+limbo.use('test').bind(7001).enableRpc()
 
 # Then connect to the server and call rpc methods
 conn2 = limbo
