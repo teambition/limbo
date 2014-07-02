@@ -8,9 +8,6 @@ Data/Message Proxy Middleware
 * Exchange data/message cross applications.
 * Listen for the data's change and emit events.
 
-# Example
-See examples directory
-
 # Providers
 * `mongo` query via mongoose api
 * `rpc` query via rpc methods
@@ -20,6 +17,7 @@ See examples directory
 * `axon/axon-rpc` limbo use [axon](https://github.com/visionmedia/axon) as message-oriented middleware, and use [axon](https://github.com/visionmedia/axon-rpc) as rpc middleware.
 
 # Example
+[example.coffee](https://github.com/teambition/limbo/blob/master/examples/example.coffee)
 
 # Changelog
 ## 0.1.4
