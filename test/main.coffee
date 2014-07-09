@@ -60,20 +60,24 @@ describe 'Limbo', ->
       conn = _limbo
         .provider 'rpc'
         .use 'test'
-        .connect rpcDsn
+        .connect rpcDsn, ->
+          num = 0
+          _callback = (err, user) ->
+            num += 1
+            return if num > 4
+            user.should.have.properties '_id', 'name', 'email'
+            done(err) if num is 4
 
-      num = 0
-      _callback = (err, user) ->
-        num += 1
-        return if num > 2
-        user.should.have.properties '_id', 'name', 'email'
-        done(err) if num is 2
+          limbo.on 'test.user.findOne', _callback
 
-      limbo.on 'test.user.findOne', _callback
+          # Both call by method name or call by method chain will work
+          conn.call 'user.findOne',
+            name: 'Alice'
+          , _callback
 
-      conn.call 'user.findOne',
-        name: 'Alice'
-      , _callback
+          conn.user.findOne
+            name: 'Alice'
+          , _callback
 
   describe 'CustomManager', ->
 

@@ -20,6 +20,9 @@ Data/Message Proxy Middleware
 [example.coffee](https://github.com/teambition/limbo/blob/master/examples/example.coffee)
 
 # Changelog
+## 0.1.6
+* the rpc provider now support method chain (only use it after the connect callback)
+
 ## 0.1.5
 * move `bind` method to mongo provider
 * support connect to different ports in different rpc instance
