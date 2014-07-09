@@ -8,8 +8,8 @@ UserSchema = (Schema) ->
 # Use mongo provider to connect mongodb
 # `test` is the group name
 conn1 = limbo
-  .use('test')
-  .connect('192.168.0.21/test')
+  .use 'test'
+  .connect '192.168.0.21/test'
   .load 'User', UserSchema
 
 conn1.user.create
@@ -23,14 +23,25 @@ limbo.use('test').bind(7001).enableRpc()
 
 # Then connect to the server and call rpc methods
 conn2 = limbo
-  .provider('rpc')
-  .use('test')
-  .connect('tcp://localhost:7001')
+  .provider 'rpc'
+  .use 'test'
+  .connect 'tcp://localhost:7001'
 
 conn2.call 'user.findOne',
   name: 'Alice'
 , (err, user) ->
   console.log 'get user Alice', user
+
+# Or: after callback of connect
+# You can directly call method chain to get data from remote service
+conn2 = limbo
+  .provider 'rpc'
+  .use 'test'
+  .connect 'tcp://localhost:7001', ->
+    conn2.user.findOne
+      name: 'Alice'
+    , (err, user) ->
+      console.log 'get user Alice', user
 
 # Manager is a proxy class between provider and model
 # You can define manager by your self
@@ -42,11 +53,11 @@ class SomeManager extends require('../lib').Manager
     , callback
 
 conn3 = limbo
-  .provider('mongo')
-  .use('test')
-  .manager(SomeManager)
-  .load('User', UserSchema)
-  .connect('192.168.0.21/test')
+  .provider 'mongo'
+  .use 'test'
+  .manager SomeManager
+  .load 'User', UserSchema
+  .connect '192.168.0.21/test'
 
 conn3.user.getAlice (err, user) -> console.log user
 
