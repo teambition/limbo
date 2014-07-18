@@ -19,6 +19,17 @@ Data/Message Proxy Middleware
 # Example
 [example.coffee](https://github.com/teambition/limbo/blob/master/examples/example.coffee)
 
+# Attention!
+Some methods in rpc provider is not enabled, here is some examples:
+
+1. method chain cross functions is not allowed:
+
+  `db.user.find({}).limit(1).exec(callback)` => `db.user.find({}, {limit: 1}, callback)`
+
+2. RegExp in conditions is not allowed:
+
+  `db.user.find({email: /gmail.com/}, {limit: 1}, callback)` => `db.user.aggregate([{$match: {'email': {$regex: 'gmail.com'}}}, {$limit: 1}])`
+
 # Changelog
 ## 0.1.6
 * the rpc provider now support method chain (only use it after the connect callback)
