@@ -30,6 +30,8 @@ Some methods in rpc provider is not enabled, here is some examples:
 
   `db.user.find({email: /gmail.com/}, {limit: 1}, callback)` => `db.user.aggregate([{$match: {'email': {$regex: 'gmail.com'}}}, {$limit: 1}])`
 
+3. `aggregate` function in mongoose do not auto cast variables to ObjectId or anything else, so you should take case of these variables and do not use them in the `rpc` provider. (for the reason JSON only accept data)
+
 # Changelog
 ## 0.1.6
 * the rpc provider now support method chain (only use it after the connect callback)
