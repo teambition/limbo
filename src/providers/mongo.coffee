@@ -22,8 +22,9 @@ class Mongo
       @_isConnected = true
     return this
 
-  bind: ->
+  bind: (port) ->
     unless @_isBound
+      arguments[0] = Number(port)
       @_server.bind.apply @_server, arguments
       @_isBound = true
     return this

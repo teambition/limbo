@@ -8,5 +8,5 @@ server1.expose 'test', (callback) -> callback null, 1
 
 rep2 = axon.socket 'rep'
 server2 = new rpc.Server rep2
-rep2.bind 7001
+rep2.bind '7001'
 server2.expose 'test', (callback) -> callback null, 2
