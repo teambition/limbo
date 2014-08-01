@@ -23,8 +23,8 @@ describe 'Limbo', ->
   # Initial limbo
   before ->
     limbo.use 'test'
-      .bind 7001
       .connect mongoDsn
+      .bind 7001
       .load 'User', UserSchema
       .enableRpc()
 
@@ -58,7 +58,6 @@ describe 'Limbo', ->
     it 'should call rpc method and get back the user named Alice', (done) ->
       _limbo = new limbo.Limbo
       conn = _limbo
-        .provider 'rpc'
         .use 'test'
         .connect rpcDsn, ->
           num = 0
@@ -92,10 +91,9 @@ describe 'Limbo', ->
 
       _limbo = new limbo.Limbo
       conn = _limbo
-        .provider 'mongo'
         .use 'test'
-        .manager Manager
         .connect mongoDsn
+        .manager Manager
         .load 'Pet', PetSchema
       conn.pet.createDog (err, dog) ->
         dog.should.have.properties '_id', 'type', 'age'
@@ -112,10 +110,9 @@ describe 'Limbo', ->
 
       _limbo = new limbo.Limbo
       conn = _limbo
-        .provider 'mongo'
         .use 'test'
-        .manager Manager
         .connect mongoDsn
+        .manager Manager
         .load 'Pet', PetSchema
       findOne = ->
         query = conn.pet.findOne.apply this, arguments
@@ -125,19 +122,19 @@ describe 'Limbo', ->
 
     before ->
       limbo.use 'test1'
-        .bind 7002
         .connect mongoDsn
+        .bind 7002
         .load 'Pet', PetSchema
         .enableRpc()
 
     it 'should connect to different ports in different groups', (done) ->
       _limbo = new limbo.Limbo
-      conn1 = _limbo.provider 'rpc'
+      conn1 = _limbo
         .use 'test'
-        .connect 7001
-      conn2 = _limbo.provider 'rpc'
+        .connect 'tcp://localhost:7001'
+      conn2 = _limbo
         .use 'test1'
-        .connect 7002
+        .connect 'tcp://localhost:7002'
 
       num = 0
       _callback = (methods, match, notMatch) ->
