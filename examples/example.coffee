@@ -23,7 +23,6 @@ limbo.use('test').bind(7001).enableRpc()
 
 # Then connect to the server and call rpc methods
 conn2 = limbo
-  .provider 'rpc'
   .use 'test'
   .connect 'tcp://localhost:7001'
 
@@ -35,7 +34,6 @@ conn2.call 'user.findOne',
 # Or: after callback of connect
 # You can directly call method chain to get data from remote service
 conn2 = limbo
-  .provider 'rpc'
   .use 'test'
   .connect 'tcp://localhost:7001', ->
     conn2.user.findOne
@@ -53,7 +51,6 @@ class SomeManager extends require('../lib').Manager
     , callback
 
 conn3 = limbo
-  .provider 'mongo'
   .use 'test'
   .manager SomeManager
   .load 'User', UserSchema
