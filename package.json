@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "mongoose": "^3.8.12",
-    "axon": "https://github.com/teambition/axon/tarball/master",
-    "axon-rpc": "0.0.3"
+    "axon-rpc": "0.0.3",
+    "axon": "^2.0.1"
   }
 }
