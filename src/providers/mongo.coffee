@@ -71,9 +71,15 @@ class Mongo
     @_server.expose eventName, ->
 
       _emit = ->
+        # Emit event
         args = (v for k, v of arguments)
         args.unshift eventName
         limbo.emit.apply limbo, args
+
+        # Emit all event
+        _args = (v for k, v of args)
+        _args.unshift '*'
+        limbo.emit.apply limbo, _args
 
       callback = arguments[arguments.length - 1]
       if typeof callback is 'function'

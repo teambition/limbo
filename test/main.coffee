@@ -2,7 +2,7 @@ should = require 'should'
 mongoDsn = process.env.MONGO_DSN or '192.168.0.21/test'
 rpcDsn = 'tcp://localhost:7001'
 mongoose = require('mongoose').createConnection mongoDsn
-limbo = require '../'
+limbo = require '../src/index'
 
 UserSchema = (Schema) ->
   new Schema
@@ -77,6 +77,21 @@ describe 'Limbo', ->
           conn.user.findOne
             name: 'Alice'
           , _callback
+
+    it 'should call rpc method and subscribe to all events by *', (done) ->
+      _limbo = new limbo.Limbo
+      conn = _limbo
+        .use 'test'
+        .connect rpcDsn, ->
+
+          limbo.on '*', (event, err, user) ->
+            event.should.eql 'test.user.findOne'
+            user.should.have.properties '_id', 'name', 'email'
+            done(err)
+
+          conn.call 'user.findOne',
+            name: "Alice"
+          , ->
 
   describe 'CustomManager', ->
 
