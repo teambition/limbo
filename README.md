@@ -49,7 +49,7 @@ As the same as `loadStatics` and `loadMethods` in limbo, the `loadOverwrite` fun
 - `axon/axon-rpc` limbo use [axon](https://github.com/visionmedia/axon) as message-oriented middleware, and use [axon](https://github.com/visionmedia/axon-rpc) as rpc middleware.
 
 # Example
-[main.coffee](https://github.com/teambition/limbo/blob/master/examples/main.coffee)
+[main.coffee](https://github.com/teambition/limbo/blob/master/examples/service1.coffee)
 
 # Attention!
 Some methods in rpc provider is not enabled, here is some examples:
