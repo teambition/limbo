@@ -1,16 +1,22 @@
 mongoose = require 'mongoose'
-Server = require '../server'
+axon = require 'axon'
+rpc = require 'axon-rpc'
 limbo = require '../limbo'
+
+rpcServerMap = {}
+getRpcServer = (port) ->
+  port = Number(port)
+  arguments[0] = port
+  unless rpcServerMap[port]
+    rep = axon.socket 'rep'
+    rpcServerMap[port] = server = new rpc.Server rep
+    rep.bind.apply rep, arguments
+  return rpcServerMap[port]
 
 class Mongo
 
-  constructor: (@_group) ->
-    @_isConnected = false
-    @_isRpcEnabled = false
-    @_isBound = false
-    @_server = new Server
+  constructor: (@group) ->
     @_models = {}
-
     # Initial the assists
     # Static -> @statis, @loadStatic, @loadStatics
     ['Static', 'Method', 'Overwrite'].forEach (key) =>
@@ -53,7 +59,6 @@ class Mongo
         model[name] = -> _fn.apply model, arguments
 
     @[modelKey] = model
-    @[modelName] = model
     @[modelName + 'Model'] = model
     @_models[modelKey] = model
     return this
@@ -61,56 +66,53 @@ class Mongo
   # Dsn of mongo connection
   # e.g. mongodb://localhost:27017/test
   connect: (dsn) ->
-    unless @_isConnected
-      @conn = mongoose.createConnection dsn
-      @_isConnected = true
-    return this
-
-  bind: (port) ->
-    unless @_isBound
-      arguments[0] = Number(port)
-      @_server.bind.apply @_server, arguments
-      @_isBound = true
+    @conn = mongoose.createConnection dsn
     return this
 
   # Every model method will be exposed as 'group.model.method'
   # e.g. UserModel.findOne in group 'local' will be exposed as 'local.user.findOne'
   enableRpc: ->
-    unless @_isRpcEnabled
-      for managerName, manager of @_managers
-        for methodName, method of manager
-          @_bindRpcMethods(managerName, methodName, manager) if typeof method is 'function' and methodName.indexOf('_') isnt 0
-      @_isRpcEnabled = true
+    server = getRpcServer.apply this, arguments
+    {group} = this
+
+    # Bind rpc method and emit an event when the callback be called
+    # The pattern of event name is '#{group}.#{modelKey}.#{methodName}'
+    # For example: test.user.findOne
+    _bindMethods = (modelKey, methodName, model) ->
+      eventName = "#{group}.#{modelKey}.#{methodName}"
+      server.expose eventName, ->
+        _emit = ->
+          # Emit event
+          args = (v for k, v of arguments)
+          args.unshift eventName
+          limbo.emit.apply limbo, args
+
+          # Emit * event
+          _args = (v for k, v of args)
+          _args.unshift '*'
+          limbo.emit.apply limbo, _args
+
+        callback = arguments[arguments.length - 1]
+
+        if typeof callback is 'function'
+          _callback = =>
+            _emit.apply this, arguments
+            callback.apply this, arguments
+          arguments[arguments.length - 1] = _callback
+        else
+          _callback = =>
+            _emit.apply this, arguments
+          arguments[arguments.length] = _callback
+
+        model[methodName].apply model, arguments
+
+    ignoreMethods = ['constructor']
+
+    for modelKey, model of @_models
+      for methodName, method of model
+        continue unless typeof method is 'function' and methodName.indexOf('_') isnt 0 and methodName not in ignoreMethods
+        _bindMethods modelKey, methodName, model
+
     return this
-
-  # Bind rpc method and emit an event when the callback be called
-  # The event name is same as rpc method name 'local.use.findOne'
-  _bindRpcMethods: (managerName, methodName, manager) ->
-    eventName = "#{@_group}.#{managerName}.#{methodName}"
-    @_server.expose eventName, ->
-
-      _emit = ->
-        # Emit event
-        args = (v for k, v of arguments)
-        args.unshift eventName
-        limbo.emit.apply limbo, args
-
-        # Emit all event
-        _args = (v for k, v of args)
-        _args.unshift '*'
-        limbo.emit.apply limbo, _args
-
-      callback = arguments[arguments.length - 1]
-      if typeof callback is 'function'
-        _callback = =>
-          _emit.apply this, arguments
-          callback.apply this, arguments
-        arguments[arguments.length - 1] = _callback
-      else
-        _callback = =>
-          _emit.apply this, arguments
-        arguments[arguments.length] = _callback
-
-      manager[methodName].apply manager, arguments
 
 module.exports = Mongo

@@ -15,8 +15,7 @@ PetSchema = (Schema) ->
     age: Number
 
 util =
-  dropDb: (done) ->
-    mongoose.db.executeDbCommand dropDatabase: 1, done
+  dropDb: (done) -> mongoose.db.executeDbCommand dropDatabase: 1, done
 
 describe 'Limbo', ->
 
@@ -24,74 +23,73 @@ describe 'Limbo', ->
   before ->
     limbo.use 'test'
       .connect mongoDsn
-      .bind 7001
       .loadSchema 'User', UserSchema
-      .enableRpc()
+      .enableRpc 7001
 
-  # describe 'LoadSchema', ->
+  describe 'LoadSchema', ->
 
-  #   # Get mongoose schemas and initial mongo provider
-  #   it 'should load schemas and get a connecter instance', ->
-  #     _limbo = new limbo.Limbo
-  #     conn = _limbo.use('test').connect mongoDsn
-  #     # Load single schema
-  #     conn.load 'User', UserSchema
-  #     conn.should.have.properties 'user'
+    # Get mongoose schemas and initial mongo provider
+    it 'should load schemas and get a connecter instance', ->
+      _limbo = new limbo.Limbo
+      conn = _limbo.use('test').connect mongoDsn
+      # Load single schema
+      conn.loadSchema 'User', UserSchema
+      conn.should.have.properties 'user', 'UserModel'
 
-  # describe 'MongoProvider', ->
+  describe 'MongoProvider', ->
 
-  #   # Create user
-  #   it 'should create user by mongo provider', (done) ->
-  #     _limbo = new limbo.Limbo
-  #     conn = _limbo.use('test').connect(mongoDsn).load 'User', UserSchema
-  #     conn.user.create
-  #       name: 'Alice'
-  #       email: 'alice@gmail.com'
-  #     , (err, user) ->
-  #       user.should.have.properties '_id', 'name', 'email'
-  #       done err
+    # Create user
+    it 'should create user by mongo provider', (done) ->
+      _limbo = new limbo.Limbo
+      conn = _limbo.use('test').connect(mongoDsn).loadSchema 'User', UserSchema
+      conn.user.create
+        name: 'Alice'
+        email: 'alice@gmail.com'
+      , (err, user) ->
+        user.should.have.properties '_id', 'name', 'email'
+        done err
 
-  # describe 'RpcProvider', ->
+  describe 'RpcProvider', ->
 
-  #   # Enable rpc server
-  #   # Call rpc methods and emit an event of same name in server side
-  #   it 'should call rpc method and get back the user named Alice', (done) ->
-  #     _limbo = new limbo.Limbo
-  #     conn = _limbo
-  #       .use 'test'
-  #       .connect rpcDsn, ->
-  #         num = 0
-  #         _callback = (err, user) ->
-  #           num += 1
-  #           return if num > 4
-  #           user.should.have.properties '_id', 'name', 'email'
-  #           done(err) if num is 4
+    # Enable rpc server
+    # Call rpc methods and emit an event of same name in server side
+    it 'should call rpc method and get back the user named Alice', (done) ->
+      _limbo = new limbo.Limbo
+      conn = _limbo
+        .use 'test'
+        .connect rpcDsn, ->
+          num = 0
+          _callback = (err, user) ->
+            num += 1
+            return if num > 4
+            user.should.have.properties '_id', 'name', 'email'
+            done(err) if num is 4
 
-  #         limbo.on 'test.user.findOne', _callback
+          limbo.on 'test.user.findOne', _callback
 
-  #         # Both call by method name or call by method chain will work
-  #         conn.call 'user.findOne',
-  #           name: 'Alice'
-  #         , _callback
+          # Both call by method name or call by method chain will work
+          conn.call 'user.findOne',
+            name: 'Alice'
+          , _callback
 
-  #         conn.user.findOne
-  #           name: 'Alice'
-  #         , _callback
+          conn.user.findOne
+            name: 'Alice'
+          , _callback
 
-  #   it 'should call rpc method and subscribe to all events by *', (done) ->
-  #     _limbo = new limbo.Limbo
-  #     conn = _limbo
-  #       .use 'test'
-  #       .connect rpcDsn, ->
+    it 'should call rpc method and subscribe to all events by *', (done) ->
+      _limbo = new limbo.Limbo
+      conn = _limbo
+        .use 'test'
+        .connect rpcDsn, ->
 
-  #         limbo.on '*', (event, err, user) ->
-  #           event.should.eql 'test.user.findOne'
-  #           user.should.have.properties '_id', 'name', 'email'
-  #           done(err)
+          limbo.on '*', (event, err, user) ->
+            event.should.eql 'test.user.findOne'
+            user.should.have.properties '_id', 'name', 'email'
+            done(err)
 
-  #         conn.call 'user.findOne',
-  #           name: "Alice"
-  #         , ->
+          conn.call 'user.findOne',
+            name: "Alice"
+          , ->
 
   describe 'CustomMethods', ->
 
@@ -160,33 +158,32 @@ describe 'Limbo', ->
       # Still return a promise
       promise.constructor.name.should.eql 'Promise'
 
-  # describe 'MultiPorts', ->
+  describe 'MultiPorts', ->
 
-  #   before ->
-  #     limbo.use 'test1'
-  #       .connect mongoDsn
-  #       .bind 7002
-  #       .load 'Pet', PetSchema
-  #       .enableRpc()
+    before ->
+      limbo.use 'test1'
+        .connect mongoDsn
+        .loadSchema 'Pet', PetSchema
+        .enableRpc 7002
 
-  #   it 'should connect to different ports in different groups', (done) ->
-  #     _limbo = new limbo.Limbo
-  #     conn1 = _limbo
-  #       .use 'test'
-  #       .connect 'tcp://localhost:7001'
-  #     conn2 = _limbo
-  #       .use 'test1'
-  #       .connect 'tcp://localhost:7002'
+    it 'should connect to different ports in different groups', (done) ->
+      _limbo = new limbo.Limbo
+      conn1 = _limbo
+        .use 'test'
+        .connect 'tcp://localhost:7001'
+      conn2 = _limbo
+        .use 'test1'
+        .connect 'tcp://localhost:7002'
 
-  #     num = 0
-  #     _callback = (methods, match, notMatch) ->
-  #       num += 1
-  #       Object.keys(methods).forEach (method) ->
-  #         method.should.match match
-  #         method.should.not.match notMatch
-  #       done() if num is 2
+      num = 0
+      _callback = (methods, match, notMatch) ->
+        num += 1
+        Object.keys(methods).forEach (method) ->
+          method.should.match match
+          method.should.not.match notMatch
+        done() if num is 2
 
-  #     conn1.methods (err, methods) -> _callback methods, /^test\.user/, /^test1\.pet/
-  #     # conn2.methods (err, methods) -> _callback methods, /^test1\.pet/, /^test\.user/
+      conn1.methods (err, methods) -> _callback methods, /^test\.user/, /^test1\.pet/
+      conn2.methods (err, methods) -> _callback methods, /^test1\.pet/, /^test\.user/
 
   after util.dropDb

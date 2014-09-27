@@ -1,34 +1,41 @@
-Client = require '../client'
+axon = require 'axon'
+rpc = require 'axon-rpc'
+
+getRpcClient = (dsn) ->
+  req = axon.socket 'req'
+  client = new rpc.Client req
+  req.connect.apply req, arguments
+  return client
 
 class Rpc
 
-  constructor: (@_group) ->
-    @_isConnected = false
-    @_client = new Client
+  constructor: (@group) ->
 
   connect: (dsn, callback = ->) ->
-    unless @_isConnected
-      @_client.connect dsn
-      @_isConnected = true
-      @methods (err, methods) =>
-        @_bindMethods methods
-        callback err
-    return this
+    @_client = getRpcClient dsn
+    {group} = this
+    self = this
 
-  _bindMethods: (methods = {}) ->
-    for name of methods
-      [group, _methods...] = name.split('.')
-      continue unless group is @_group
-      do (_methods) =>
-        @[_methods[0]] or= {}
-        @[_methods[0]][_methods[1]] = =>
-          args = (v for k, v of arguments)
-          args.unshift _methods.join '.'
-          @call.apply this, args
+    _bindMethods = (methods = {}) ->
+      for name of methods
+        [_group, _methods...] = name.split('.')
+        continue unless _group is group
+        do (_methods) ->
+          self[_methods[0]] or= {}
+          self[_methods[0]][_methods[1]] = ->
+            args = (v for k, v of arguments)
+            args.unshift _methods.join '.'
+            self.call.apply self, args
+      return self
+
+    @methods (err, methods) ->
+      _bindMethods methods
+      callback err, methods
+
     return this
 
   call: (method) ->
-    method = "#{@_group}.#{method}"
+    method = "#{@group}.#{method}"
     arguments[0] = method
     @_client.call.apply @_client, arguments
 

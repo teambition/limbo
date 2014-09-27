@@ -49,7 +49,7 @@ As the same as `loadStatics` and `loadMethods` in limbo, the `loadOverwrite` fun
 - `axon/axon-rpc` limbo use [axon](https://github.com/visionmedia/axon) as message-oriented middleware, and use [axon](https://github.com/visionmedia/axon-rpc) as rpc middleware.
 
 # Example
-[example.coffee](https://github.com/teambition/limbo/blob/master/examples/example.coffee)
+[main.coffee](https://github.com/teambition/limbo/blob/master/examples/main.coffee)
 
 # Attention!
 Some methods in rpc provider is not enabled, here is some examples:
@@ -68,7 +68,7 @@ Some methods in rpc provider is not enabled, here is some examples:
 ## 0.2.0
 - forget manager, use model now
 - merge `bind` and `enableRpc` to one method: `enableRpc`
-- `statics`, `methods` and `overwrites` in mongo provider
+- `loadStatics`, `loadMethods` and `loadOverwrites` in mongo provider
 - use the `load` prefix on all loading methods
 
 ## 0.1.8
