@@ -15,8 +15,7 @@ PetSchema = (Schema) ->
     age: Number
 
 util =
-  dropDb: (done) ->
-    mongoose.db.executeDbCommand dropDatabase: 1, done
+  dropDb: (done) -> mongoose.db.executeDbCommand dropDatabase: 1, done
 
 describe 'Limbo', ->
 
@@ -24,9 +23,8 @@ describe 'Limbo', ->
   before ->
     limbo.use 'test'
       .connect mongoDsn
-      .bind 7001
-      .load 'User', UserSchema
-      .enableRpc()
+      .loadSchema 'User', UserSchema
+      .enableRpc 7001
 
   describe 'LoadSchema', ->
 
@@ -35,15 +33,15 @@ describe 'Limbo', ->
       _limbo = new limbo.Limbo
       conn = _limbo.use('test').connect mongoDsn
       # Load single schema
-      conn.load 'User', UserSchema
-      conn.should.have.properties 'user'
+      conn.loadSchema 'User', UserSchema
+      conn.should.have.properties 'user', 'UserModel'
 
   describe 'MongoProvider', ->
 
     # Create user
     it 'should create user by mongo provider', (done) ->
       _limbo = new limbo.Limbo
-      conn = _limbo.use('test').connect(mongoDsn).load 'User', UserSchema
+      conn = _limbo.use('test').connect(mongoDsn).loadSchema 'User', UserSchema
       conn.user.create
         name: 'Alice'
         email: 'alice@gmail.com'
@@ -93,54 +91,80 @@ describe 'Limbo', ->
             name: "Alice"
           , ->
 
-  describe 'CustomManager', ->
+  describe 'CustomMethods', ->
 
-    it 'should define a method in manager and call this method', (done) ->
-      class Manager extends limbo.Manager
+    it 'should define a static method and bind it to all the models', (done) ->
 
+      _limbo = new limbo.Limbo
+
+      _statics =
         createDog: (callback) ->
-          @model.create
+          @create
             type: 'dog'
             age: 1
           , callback
 
-      _limbo = new limbo.Limbo
       conn = _limbo
         .use 'test'
         .connect mongoDsn
-        .manager Manager
-        .load 'Pet', PetSchema
+        .loadStatics _statics
+        .loadSchema 'Pet', PetSchema
+
       conn.pet.createDog (err, dog) ->
         dog.should.have.properties '_id', 'type', 'age'
         dog.age.should.eql 1
         done err
 
-  describe 'BindManager', ->
-
-    it 'this should not be changed in managers', (done) ->
-      class Manager extends limbo.Manager
-
-        findOne: ->
-          @model.findOne.apply @model, arguments
+    it 'should define an instance method and bind it to all the instance', (done) ->
 
       _limbo = new limbo.Limbo
-      conn = _limbo
-        .use 'test'
+
+      _methods = getAge: -> @age
+
+      conn = _limbo.use 'test'
         .connect mongoDsn
-        .manager Manager
-        .load 'Pet', PetSchema
-      findOne = ->
-        query = conn.pet.findOne.apply this, arguments
-      findOne {}, (err) -> done err
+        .loadMethods _methods
+        .loadSchema 'Pet', PetSchema
+
+      pet = new conn.PetModel type: 'dog', age: 1
+      pet.getAge().should.eql 1
+      done()
+
+    it 'should define an pre method and bind it to all the schemas', (done) ->
+      _limbo = new limbo.Limbo
+
+      _PetSchema = PetSchema limbo.mongoose.Schema
+
+      # The embed hooks should also work
+      _PetSchema.pre 'save', (next) ->
+        @age += 1
+        next()
+
+      conn = _limbo.use 'test'
+        .connect mongoDsn
+        .loadOverwrite 'create', (_create) ->
+
+          (doc) ->
+            doc.age += 1
+            _create.apply this, arguments
+
+        .loadSchema 'Pet', _PetSchema
+
+      promise = conn.pet.create {type: 'dog', age: 1}, (err, dog) ->
+        dog.should.have.properties '_id', 'type', 'age'
+        dog.age.should.eql 3
+        done err
+
+      # Still return a promise
+      promise.constructor.name.should.eql 'Promise'
 
   describe 'MultiPorts', ->
 
     before ->
       limbo.use 'test1'
         .connect mongoDsn
-        .bind 7002
-        .load 'Pet', PetSchema
-        .enableRpc()
+        .loadSchema 'Pet', PetSchema
+        .enableRpc 7002
 
     it 'should connect to different ports in different groups', (done) ->
       _limbo = new limbo.Limbo

@@ -1,4 +1,3 @@
-server = require './server'
 {EventEmitter} = require 'events'
 Proxy = require './proxy'
 
