@@ -17,7 +17,7 @@ Data/Message Proxy Middleware
 AFAIK, we can use `hooks` or so called `middlewares` to modify the mongoose model object before `save` and `remove` functions, but it does not works on `update` function. There was even leaded to an argument on [github](https://github.com/LearnBoost/mongoose/issues/964), but the maintainers still don't pay their attension on this issue.
 So I decide to use some tricks to `overwrite` the mongoose model methods, and make the hooks work. For example, we have an `update` function in model, we need update the `updatedAt` key when we save data by `update` function, we can `overwrite` this function.
 
-```
+```coffeescript
 _update = UserModel.update
 UserModel.update = (conditions, update) ->
   update.updatedAt or= new Date
@@ -26,7 +26,7 @@ UserModel.update = (conditions, update) ->
 
 In `limbo`, we supply an `overwrite` function to help you overwrite the same name function of each model.
 
-```
+```coffeescript
 limbo = require 'limbo'
 db = limbo.use('test').connect('mongodb://localhost/test')
 # Overwrite the update function
@@ -49,8 +49,8 @@ As the same as `loadStatics` and `loadMethods` in limbo, the `loadOverwrite` fun
 - `axon/axon-rpc` limbo use [axon](https://github.com/visionmedia/axon) as message-oriented middleware, and use [axon](https://github.com/visionmedia/axon-rpc) as rpc middleware.
 
 # Example
-[service1](https://github.com/teambition/limbo/blob/master/examples/service1.coffee)
-[service2](https://github.com/teambition/limbo/blob/master/examples/service2.coffee)
+[service query db by mongoose](https://github.com/teambition/limbo/blob/master/examples/service1.coffee)
+[service query db by rpc](https://github.com/teambition/limbo/blob/master/examples/service2.coffee)
 
 # Attention!
 Some methods in rpc provider is not enabled, here is some examples:
