@@ -49,8 +49,8 @@ As the same as `loadStatics` and `loadMethods` in limbo, the `loadOverwrite` fun
 - `axon/axon-rpc` limbo use [axon](https://github.com/visionmedia/axon) as message-oriented middleware, and use [axon](https://github.com/visionmedia/axon-rpc) as rpc middleware.
 
 # Example
-[service query db by mongoose](https://github.com/teambition/limbo/blob/master/examples/service1.coffee)
-[service query db by rpc](https://github.com/teambition/limbo/blob/master/examples/service2.coffee)
+- [service query db by mongoose](https://github.com/teambition/limbo/blob/master/examples/service1.coffee)
+- [service query db by rpc](https://github.com/teambition/limbo/blob/master/examples/service2.coffee)
 
 # Attention!
 Some methods in rpc provider is not enabled, here is some examples:
@@ -66,6 +66,9 @@ Some methods in rpc provider is not enabled, here is some examples:
 3. `aggregate` function in mongoose do not auto cast variables to ObjectId or anything else, so you should take case of these variables and do not use them in the `rpc` provider. (for the reason JSON only accept data)
 
 # Changelog
+## 0.2.1
+- fix the confliction of _fn in coffeescript
+
 ## 0.2.0
 - forget manager, use model now
 - merge `bind` and `enableRpc` to one method: `enableRpc`
