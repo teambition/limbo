@@ -1,7 +1,7 @@
 # This service query the mongo db by native mongoose methods
 
 limbo = require '../'
-mongoDsn = 'mongodb://localhost/test'
+mongoDsn = 'mongodb://192.168.0.21/test'
 
 UserSchema = (Schema) ->
   new Schema

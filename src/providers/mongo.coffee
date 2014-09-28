@@ -44,19 +44,19 @@ class Mongo
     modelKey = modelName.toLowerCase()
     schema = schema(mongoose.Schema) if typeof schema is 'function'
 
-    for name, fn of @methods
-      schema.methods[name] = fn
-    for name, fn of @statics
-      schema.statics[name] = fn
+    for name, instanceMethod of @methods
+      schema.methods[name] = instanceMethod
+    for name, staticMethod of @statics
+      schema.statics[name] = staticMethod
 
     model = @conn.model modelName, schema
 
-    for name, fn of @overwrites
+    for name, overwriteMethod of @overwrites
       return unless typeof model[name] is 'function'
-      do (name, fn) ->
+      do (name, overwriteMethod) ->
         _origin = model[name]
-        _fn = fn(_origin)
-        model[name] = -> _fn.apply model, arguments
+        _overwriteMethod = overwriteMethod(_origin)
+        model[name] = -> _overwriteMethod.apply model, arguments
 
     @[modelKey] = model
     @[modelName + 'Model'] = model
