@@ -3,16 +3,14 @@ Proxy = require './proxy'
 
 class Limbo extends EventEmitter
 
-  constructor: ->
-    @_providers = {}
+  constructor: -> @_providers = {}
 
   # Limbo separate the schemas into groups
   # Most time group should be the same as db name
   # So the schemas will be reflected to
   # the collections of the database
   use: (group) ->
-    unless @_providers[group]
-      @_providers[group] = new Proxy(group)
+    @_providers[group] = new Proxy(group) unless @_providers[group]
     return @_providers[group]
 
 limbo = new Limbo

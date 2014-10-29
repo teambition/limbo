@@ -1,7 +1,7 @@
 {
   "name": "limbo",
   "version": "0.2.1",
-  "description": "Data/Message Proxy Middleware",
+  "description": "Factory/Loader of mongoose",
   "main": "./lib/index.js",
   "directories": {
     "test": "test"
@@ -10,6 +10,13 @@
     "test": "make test",
     "prepublish": "coffee -o lib -c src"
   },
+  "keywords": [
+    "mongoose",
+    "mongodb",
+    "database",
+    "rpc",
+    "loader"
+  ],
   "license": "MIT",
   "author": "teambition",
   "repository": {

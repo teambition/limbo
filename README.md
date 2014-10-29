@@ -1,7 +1,7 @@
 limbo [![NPM version][npm-image]][npm-url] [![Build Status][travis-image]][travis-url]
 =====
 
-Data/Message Proxy Middleware
+Factory/Loader of mongoose
 
 # Deal with what
 - A rpc server for querying mongodb.
