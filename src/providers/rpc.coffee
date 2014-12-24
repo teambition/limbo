@@ -9,11 +9,15 @@ getRpcClient = (dsn) ->
 
 class Rpc
 
-  constructor: (@group) ->
+  constructor: (options) ->
+    {conn, group} = options
+    @_group = group
+    @_conn = conn
+    @connect conn
 
   connect: (dsn, callback = ->) ->
     @_client = getRpcClient dsn
-    {group} = this
+    group = @_group
     self = this
 
     _bindMethods = (methods = {}) ->
@@ -35,7 +39,7 @@ class Rpc
     return this
 
   call: (method) ->
-    method = "#{@group}.#{method}"
+    method = "#{@_group}.#{method}"
     arguments[0] = method
     @_client.call.apply @_client, arguments
 
