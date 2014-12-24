@@ -11,6 +11,7 @@ class Rpc
 
   constructor: (options) ->
     {conn, group} = options
+    throw new Error('missing conn param in rpc provider options') unless conn
     @_group = group
     @_conn = conn
     @connect conn

@@ -9,7 +9,7 @@ class Limbo extends EventEmitter
   # Most time group should be the same as db name
   # So the schemas will be reflected to
   # the collections of the database
-  use: (group, options) ->
+  use: (group, options = {}) ->
     unless @_providers[group]
       {provider} = options
       provider or= 'mongo'

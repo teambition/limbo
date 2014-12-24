@@ -16,6 +16,7 @@ class Mongo
 
   constructor: (options) ->
     {conn, group, methods, statics, overwrites, schemas, rpcPort} = options
+    throw new Error('missing conn param in mongo provider options') unless conn
     @_group = group
 
     @_conn = conn
