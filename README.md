@@ -28,7 +28,8 @@ In `limbo`, we supply an `overwrite` function to help you overwrite the same nam
 
 ```coffeescript
 limbo = require 'limbo'
-db = limbo.use('test').connect('mongodb://localhost/test')
+db = limbo.use 'test',
+  conn: mongoose.createConnection 'mongodb://localhost/test'
 # Overwrite the update function
 db.loadOverwrite 'update', (_update) ->
   (conditions, update) ->
@@ -45,12 +46,11 @@ We use a currying way to ensure your function recieve the exactly arguments by t
 As the same as `loadStatics` and `loadMethods` in limbo, the `loadOverwrite` function also have a plural version: `loadOverwrites`, you can pass a group of overwrite function to it.
 
 # Dependencies
-- `mongoose` limbo is based on [mongodb](http://www.mongodb.org) and use [mongoose](https://github.com/LearnBoost/mongoose).
 - `axon/axon-rpc` limbo use [axon](https://github.com/visionmedia/axon) as message-oriented middleware, and use [axon](https://github.com/visionmedia/axon-rpc) as rpc middleware.
 
 # Example
-- [service query db by mongoose](https://github.com/teambition/limbo/blob/master/examples/service1.coffee)
-- [service query db by rpc](https://github.com/teambition/limbo/blob/master/examples/service2.coffee)
+- [service query db by mongoose](https://github.com/teambition/limbo/blob/master/examples/local.coffee)
+- [service query db by rpc](https://github.com/teambition/limbo/blob/master/examples/remote.coffee)
 
 # Attention!
 Some methods in rpc provider is not enabled, here is some examples:
@@ -66,6 +66,9 @@ Some methods in rpc provider is not enabled, here is some examples:
 3. `aggregate` function in mongoose do not auto cast variables to ObjectId or anything else, so you should take case of these variables and do not use them in the `rpc` provider. (for the reason JSON only accept data)
 
 # Changelog
+## 0.3.0
+- remove mongoose dependency and change the initial function
+
 ## 0.2.3
 - get rid of mongoose 3.8.17 (bugness) and use a lenient dependence
 

@@ -1,48 +1,48 @@
 should = require 'should'
+mongoose = require 'mongoose'
+{Schema} = mongoose
+
 mongoDsn = process.env.MONGO_DSN or '192.168.0.21/test'
 rpcDsn = 'tcp://localhost:7001'
-mongoose = require('mongoose').createConnection mongoDsn
-limbo = require '../src/index'
+limbo = require '../src/limbo'
+{Limbo} = limbo
 
-UserSchema = (Schema) ->
-  new Schema
-    name: String
-    email: String
+conn = mongoose.createConnection mongoDsn
 
-PetSchema = (Schema) ->
-  new Schema
-    type: String
-    age: Number
+UserSchema = new Schema
+  name: String
+  email: String
+
+PetSchema = new Schema
+  type: String
+  age: Number
 
 util =
-  dropDb: (done) -> mongoose.db.executeDbCommand dropDatabase: 1, done
+  dropDb: (done) -> conn.db.executeDbCommand dropDatabase: 1, done
 
 describe 'Limbo', ->
-
-  # Initial limbo
-  before ->
-    limbo.use 'test'
-      .connect mongoDsn
-      .loadSchema 'User', UserSchema
-      .enableRpc 7001
 
   describe 'LoadSchema', ->
 
     # Get mongoose schemas and initial mongo provider
-    it 'should load schemas and get a connecter instance', ->
-      _limbo = new limbo.Limbo
-      conn = _limbo.use('test').connect mongoDsn
-      # Load single schema
-      conn.loadSchema 'User', UserSchema
-      conn.should.have.properties 'user', 'UserModel'
+    it 'should load schemas', ->
+      _limbo = new Limbo
+      # Initialize group test and load user schema
+      dbGroup = _limbo.use 'test',
+        conn: conn
+        schemas: User: UserSchema
+      dbGroup.should.have.properties 'user', 'UserModel'
 
   describe 'MongoProvider', ->
 
     # Create user
     it 'should create user by mongo provider', (done) ->
-      _limbo = new limbo.Limbo
-      conn = _limbo.use('test').connect(mongoDsn).loadSchema 'User', UserSchema
-      conn.user.create
+      _limbo = new Limbo
+      dbGroup = _limbo.use 'test',
+        conn: conn
+        schemas: User: UserSchema
+
+      dbGroup.user.create
         name: 'Alice'
         email: 'alice@gmail.com'
       , (err, user) ->
@@ -51,106 +51,99 @@ describe 'Limbo', ->
 
   describe 'RpcProvider', ->
 
+    _server = null
+
+    # Initialize the rpc server
+    before (done) ->
+      _limbo = new Limbo
+      _server = _limbo.use 'test',
+        conn: conn
+        schemas: User: UserSchema
+        rpcPort: 7001
+      done()
+
     # Enable rpc server
     # Call rpc methods and emit an event of same name in server side
     it 'should call rpc method and get back the user named Alice', (done) ->
-      _limbo = new limbo.Limbo
-      conn = _limbo
-        .use 'test'
-        .connect rpcDsn, ->
-          num = 0
-          _callback = (err, user) ->
-            num += 1
-            return if num > 4
-            user.should.have.properties '_id', 'name', 'email'
-            done(err) if num is 4
+      _limbo = new Limbo
+      dbGroup = _limbo.use 'test',
+        provider: 'rpc'
+        conn: rpcDsn
 
-          limbo.on 'test.user.findOne', _callback
+      succNum = 0
+      _callback = (err, user) ->
+        succNum += 1
+        return if succNum > 4
+        user.should.have.properties '_id', 'name', 'email'
+        done err if succNum is 4
 
-          # Both call by method name or call by method chain will work
-          conn.call 'user.findOne',
-            name: 'Alice'
-          , _callback
+      _server.user.on 'findOne', _callback
 
-          conn.user.findOne
-            name: 'Alice'
-          , _callback
+      dbGroup.call 'user.findOne',
+        name: 'Alice'
+      , _callback
 
-    it 'should call rpc method and subscribe to all events by *', (done) ->
-      _limbo = new limbo.Limbo
-      conn = _limbo
-        .use 'test'
-        .connect rpcDsn, ->
-
-          limbo.on '*', (event, err, user) ->
-            event.should.eql 'test.user.findOne'
-            user.should.have.properties '_id', 'name', 'email'
-            done(err)
-
-          conn.call 'user.findOne',
-            name: "Alice"
-          , ->
+      # Wait for the schemas loaded
+      setTimeout ->
+        dbGroup.user.findOne
+          name: 'Alice'
+        , _callback
+      , 100
 
   describe 'CustomMethods', ->
 
     it 'should define a static method and bind it to all the models', (done) ->
 
-      _limbo = new limbo.Limbo
+      _limbo = new Limbo
 
-      _statics =
-        createDog: (callback) ->
-          @create
-            type: 'dog'
-            age: 1
-          , callback
+      statics = createDog: (callback) -> @create {type: 'dog', age: 1}, callback
 
-      conn = _limbo
-        .use 'test'
-        .connect mongoDsn
-        .loadStatics _statics
-        .loadSchema 'Pet', PetSchema
+      dbGroup = _limbo.use 'test',
+        conn: conn
+        schemas: Pet: PetSchema
+        statics: statics
 
-      conn.pet.createDog (err, dog) ->
+      dbGroup.pet.createDog (err, dog) ->
         dog.should.have.properties '_id', 'type', 'age'
         dog.age.should.eql 1
         done err
 
     it 'should define an instance method and bind it to all the instance', (done) ->
 
-      _limbo = new limbo.Limbo
+      _limbo = new Limbo
 
-      _methods = getAge: -> @age
+      methods = getAge: -> @age
 
-      conn = _limbo.use 'test'
-        .connect mongoDsn
-        .loadMethods _methods
-        .loadSchema 'Pet', PetSchema
+      dbGroup = _limbo.use 'test',
+        conn: conn
+        methods: methods
+        schemas: Pet1: PetSchema
 
-      pet = new conn.PetModel type: 'dog', age: 1
+      pet = new dbGroup.Pet1Model type: 'dog', age: 1
       pet.getAge().should.eql 1
       done()
 
     it 'should define an pre method and bind it to all the schemas', (done) ->
-      _limbo = new limbo.Limbo
 
-      _PetSchema = PetSchema limbo.mongoose.Schema
+      _limbo = new Limbo
 
       # The embed hooks should also work
-      _PetSchema.pre 'save', (next) ->
+      PetSchema.pre 'save', (next) ->
         @age += 1
         next()
 
-      conn = _limbo.use 'test'
-        .connect mongoDsn
-        .loadOverwrite 'create', (_create) ->
-
-          (doc) ->
-            doc.age += 1
+      overwrites =
+        create: (_create) ->
+          (pet) ->
+            pet.age += 1
             _create.apply this, arguments
 
-        .loadSchema 'Pet', _PetSchema
+      dbGroup = _limbo.use 'test',
+        conn: conn
+        overwrites: overwrites
+        schemas: Pet: PetSchema
 
-      promise = conn.pet.create {type: 'dog', age: 1}, (err, dog) ->
+      promise = dbGroup.pet.create {type: 'dog', age: 1}, (err, dog) ->
         dog.should.have.properties '_id', 'type', 'age'
         dog.age.should.eql 3
         done err
@@ -160,20 +153,25 @@ describe 'Limbo', ->
 
   describe 'MultiPorts', ->
 
+    _server = null
+
     before ->
-      limbo.use 'test1'
-        .connect mongoDsn
-        .loadSchema 'Pet', PetSchema
-        .enableRpc 7002
+      _server = limbo.use 'test1',
+        conn: conn
+        schemas: Pet: PetSchema
+        rpcPort: 7002
 
     it 'should connect to different ports in different groups', (done) ->
-      _limbo = new limbo.Limbo
-      conn1 = _limbo
-        .use 'test'
-        .connect 'tcp://localhost:7001'
-      conn2 = _limbo
-        .use 'test1'
-        .connect 'tcp://localhost:7002'
+
+      _limbo = new Limbo
+
+      dbGroup1 = _limbo.use 'test',
+        provider: 'rpc'
+        conn: 'tcp://localhost:7001'
+
+      dbGroup2 = _limbo.use 'test1',
+        provider: 'rpc'
+        conn: 'tcp://localhost:7002'
 
       num = 0
       _callback = (methods, match, notMatch) ->
@@ -183,7 +181,7 @@ describe 'Limbo', ->
           method.should.not.match notMatch
         done() if num is 2
 
-      conn1.methods (err, methods) -> _callback methods, /^test\.user/, /^test1\.pet/
-      conn2.methods (err, methods) -> _callback methods, /^test1\.pet/, /^test\.user/
+      dbGroup1.methods (err, methods) -> _callback methods, /^test\.user/, /^test1\.pet/
+      dbGroup2.methods (err, methods) -> _callback methods, /^test1\.pet/, /^test\.user/
 
   after util.dropDb
