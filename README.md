@@ -1,5 +1,9 @@
-limbo [![NPM version][npm-image]][npm-url] [![Build Status][travis-image]][travis-url]
+limbo
 =====
+
+[![NPM version][npm-image]][npm-url]
+[![Build Status][travis-image]][travis-url]
+[![Talk topic][talk-image]][talk-url]
 
 Factory/Loader of mongoose
 
@@ -116,3 +120,6 @@ MIT
 
 [travis-url]: https://travis-ci.org/teambition/limbo
 [travis-image]: http://img.shields.io/travis/teambition/limbo.svg
+
+[talk-url]: https://guest.talk.ai/rooms/85bf7a403t
+[talk-image]: https://img.shields.io/talk/t/85bf7a403t.svg
