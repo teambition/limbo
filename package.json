@@ -8,7 +8,7 @@
   },
   "scripts": {
     "test": "make test",
-    "prepublish": "coffee -o lib -c src"
+    "prepublish": "rm -rf lib && coffee -o lib -c src"
   },
   "keywords": [
     "mongoose",

@@ -70,6 +70,11 @@ describe 'Limbo', ->
         provider: 'rpc'
         conn: rpcDsn
 
+      # Emit `bind` event when the methods are bound to the client
+      dbGroup.on 'bind', (err) ->
+        dbGroup.should.have.properties 'user'
+        dbGroup.user.findOne name: 'Alice', _callback
+
       succNum = 0
       _callback = (err, user) ->
         succNum += 1
@@ -82,13 +87,6 @@ describe 'Limbo', ->
       dbGroup.call 'user.findOne',
         name: 'Alice'
       , _callback
-
-      # Wait for the schemas loaded
-      setTimeout ->
-        dbGroup.user.findOne
-          name: 'Alice'
-        , _callback
-      , 100
 
   describe 'CustomMethods', ->
 

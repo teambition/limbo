@@ -1,5 +1,6 @@
 axon = require 'axon'
 rpc = require 'axon-rpc'
+{EventEmitter} = require 'events'
 
 getRpcClient = (dsn) ->
   req = axon.socket 'req'
@@ -7,7 +8,7 @@ getRpcClient = (dsn) ->
   req.connect.apply req, arguments
   return client
 
-class Rpc
+class Rpc extends EventEmitter
 
   constructor: (options) ->
     {conn, group} = options
@@ -35,6 +36,7 @@ class Rpc
 
     @methods (err, methods) ->
       _bindMethods methods
+      self.emit 'bind', err
       callback err, methods
 
     return this

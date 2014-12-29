@@ -70,6 +70,9 @@ Some methods in rpc provider is not enabled, here is some examples:
 3. `aggregate` function in mongoose do not auto cast variables to ObjectId or anything else, so you should take case of these variables and do not use them in the `rpc` provider. (for the reason JSON only accept data)
 
 # Changelog
+## 0.3.1
+- emit `bind` event when methods are loaded from rpc server
+
 ## 0.3.0
 - remove mongoose dependency and change the initial function
 
