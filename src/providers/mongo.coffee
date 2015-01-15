@@ -64,13 +64,14 @@ class Mongo
 
     newSchemas = {}
     newSchemas[modelKey] = schema
-    newModels = {}
-    newModels[modelKey] = model
 
     @loadMethods @_methods, newSchemas
     @loadStatics @_statics, newSchemas
 
     model = @_conn.model modelName, schema
+
+    newModels = {}
+    newModels[modelKey] = model
 
     @[modelKey] = model
     @[modelName + 'Model'] = model
