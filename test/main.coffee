@@ -17,8 +17,7 @@ PetSchema = new Schema
   type: String
   age: Number
 
-util =
-  dropDb: (done) -> conn.db.executeDbCommand dropDatabase: 1, done
+cleanup = (done) -> conn.db.dropDatabase done
 
 describe 'Limbo', ->
 
@@ -182,4 +181,4 @@ describe 'Limbo', ->
       dbGroup1.methods (err, methods) -> _callback methods, /^test\.user/, /^test1\.pet/
       dbGroup2.methods (err, methods) -> _callback methods, /^test1\.pet/, /^test\.user/
 
-  after util.dropDb
+  after cleanup
