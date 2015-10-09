@@ -1,16 +1,5 @@
-axon = require 'axon'
-rpc = require 'axon-rpc'
+dnode = require 'dnode'
 limbo = require '../limbo'
-
-rpcServerMap = {}
-getRpcServer = (port) ->
-  port = Number(port)
-  arguments[0] = port
-  unless rpcServerMap[port]
-    rep = axon.socket 'rep'
-    rpcServerMap[port] = server = new rpc.Server rep
-    rep.bind.apply rep, arguments
-  return rpcServerMap[port]
 
 class Mongo
 
@@ -100,20 +89,22 @@ class Mongo
     @loadSchema(modelName, schema) for modelName, schema of schemas
     this
 
-  # Every model method will be exposed as 'group.model.method'
-  # e.g. UserModel.findOne in group 'local' will be exposed as 'local.user.findOne'
+  # Every model method will be exposed as 'group__model__method'
+  # e.g. UserModel.findOne in group 'local' will be exposed as 'local__user__findOne'
   bindRpcEvent: (modelKey) ->
-    server = getRpcServer @_rpcPort
     group = @_group
     models = @_models
     model = models[modelKey]
+
+    rpcMethods = {}
 
     # Bind rpc method and emit an event on each model when the callback be called
     # The pattern of event name is the method name
     # For example: db.user.on 'findOne', (err, user) ->
     _bindMethod = (methodName) ->
-      eventName = "#{group}.#{modelKey}.#{methodName}"
-      server.expose eventName, ->
+      eventName = "#{group}__#{modelKey}__#{methodName}"
+
+      rpcMethods[eventName] = ->
 
         _emit = ->
           modelArgs = (v for k, v of arguments)
@@ -126,14 +117,21 @@ class Mongo
           limbo.emit.apply limbo, limboArgs
 
         callback = arguments[arguments.length - 1]
+
         if typeof callback is 'function'
-          _callback = =>
+          _callback = (err) =>
             _emit.apply this, arguments
+            # Keep stack property in response to clients
+            if err instanceof Error
+              errObj =
+                message: err.message
+                stack: err.stack
+              arguments[0] = errObj
             callback.apply this, arguments
           arguments[arguments.length - 1] = _callback
+
         else
-          _callback = =>
-            _emit.apply this, arguments
+          _callback = => _emit.apply this, arguments
           arguments[arguments.length] = _callback
 
         # Call the query method
@@ -147,6 +145,10 @@ class Mongo
              methodName not in ignoredMethods
         continue
       _bindMethod methodName
+
+    # Bind to rpc port
+    rpcServer = dnode rpcMethods
+    rpcServer.listen @_rpcPort
 
     this
 

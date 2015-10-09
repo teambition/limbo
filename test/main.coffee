@@ -2,12 +2,12 @@ should = require 'should'
 mongoose = require 'mongoose'
 {Schema} = mongoose
 
-mongoDsn = process.env.MONGO_DSN or '192.168.0.21/test'
-rpcDsn = 'tcp://localhost:7001'
+mongoDsn = process.env.MONGO_DSN or 'mongodb://root:root@192.168.0.21:27017/test'
+rpcDsn = '7001'
 limbo = require '../src/limbo'
 {Limbo} = limbo
 
-conn = mongoose.createConnection mongoDsn
+conn = mongoose.createConnection mongoDsn, auth: authdb: 'admin'
 
 UserSchema = new Schema
   name: String
@@ -69,11 +69,6 @@ describe 'Limbo', ->
         provider: 'rpc'
         conn: rpcDsn
 
-      # Emit `bind` event when the methods are bound to the client
-      dbGroup.on 'bind', (err) ->
-        dbGroup.should.have.properties 'user'
-        dbGroup.user.findOne name: 'Alice', _callback
-
       succNum = 0
       _callback = (err, user) ->
         succNum += 1
@@ -81,11 +76,15 @@ describe 'Limbo', ->
         user.should.have.properties '_id', 'name', 'email'
         done err if succNum is 4
 
-      _server.user.on 'findOne', _callback
+      # Emit `bind` event when the methods are bound to the client
+      dbGroup.on 'bind', (err) ->
+        dbGroup.should.have.properties 'user'
+        dbGroup.user.findOne name: 'Alice', _callback
+        dbGroup.call 'user.findOne',
+          name: 'Alice'
+        , _callback
 
-      dbGroup.call 'user.findOne',
-        name: 'Alice'
-      , _callback
+      _server.user.on 'findOne', _callback
 
   describe 'CustomMethods', ->
 
@@ -147,38 +146,3 @@ describe 'Limbo', ->
 
       # Still return a promise
       promise.constructor.name.should.eql 'Promise'
-
-  describe 'MultiPorts', ->
-
-    _server = null
-
-    before ->
-      _server = limbo.use 'test1',
-        conn: conn
-        schemas: Pet: PetSchema
-        rpcPort: 7002
-
-    it 'should connect to different ports in different groups', (done) ->
-
-      _limbo = new Limbo
-
-      dbGroup1 = _limbo.use 'test',
-        provider: 'rpc'
-        conn: 'tcp://localhost:7001'
-
-      dbGroup2 = _limbo.use 'test1',
-        provider: 'rpc'
-        conn: 'tcp://localhost:7002'
-
-      num = 0
-      _callback = (methods, match, notMatch) ->
-        num += 1
-        Object.keys(methods).forEach (method) ->
-          method.should.match match
-          method.should.not.match notMatch
-        done() if num is 2
-
-      dbGroup1.methods (err, methods) -> _callback methods, /^test\.user/, /^test1\.pet/
-      dbGroup2.methods (err, methods) -> _callback methods, /^test1\.pet/, /^test\.user/
-
-  after cleanup
