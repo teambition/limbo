@@ -1,3 +1,4 @@
+urlLib = require 'url'
 dnode = require 'dnode'
 {EventEmitter} = require 'events'
 
@@ -12,7 +13,17 @@ class Rpc extends EventEmitter
     @connect conn
 
   connect: (dsn, callback = ->) ->
-    client = dnode.connect dsn
+    # Parse clientOptions from dsn string
+    if toString.call(dsn) is '[object Object]'
+      clientOptions = dsn
+    else
+      dsnOptions = urlLib.parse dsn
+      if dsnOptions.port
+        clientOptions = port: dsnOptions.port, host: dsnOptions.hostname
+      else
+        clientOptions = path: dsnOptions.path
+
+    client = dnode.connect clientOptions
     group = @_group
     self = this
 

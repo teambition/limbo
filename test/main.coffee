@@ -3,7 +3,7 @@ mongoose = require 'mongoose'
 {Schema} = mongoose
 
 mongoDsn = process.env.MONGO_DSN or 'mongodb://root:root@192.168.0.21:27017/test'
-rpcDsn = '7001'
+rpcDsn = 'tcp://127.0.0.1:7001'
 limbo = require '../src/limbo'
 {Limbo} = limbo
 
