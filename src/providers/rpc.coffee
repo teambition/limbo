@@ -1,12 +1,6 @@
-axon = require 'axon'
-rpc = require 'axon-rpc'
+urlLib = require 'url'
+dnode = require 'dnode'
 {EventEmitter} = require 'events'
-
-getRpcClient = (dsn) ->
-  req = axon.socket 'req'
-  client = new rpc.Client req
-  req.connect.apply req, arguments
-  return client
 
 class Rpc extends EventEmitter
 
@@ -15,16 +9,28 @@ class Rpc extends EventEmitter
     throw new Error('missing conn param in rpc provider options') unless conn
     @_group = group
     @_conn = conn
+    @_remote = null
     @connect conn
 
   connect: (dsn, callback = ->) ->
-    @_client = getRpcClient dsn
+    # Parse clientOptions from dsn string
+    if toString.call(dsn) is '[object Object]'
+      clientOptions = dsn
+    else
+      dsnOptions = urlLib.parse dsn
+      if dsnOptions.port
+        clientOptions = port: dsnOptions.port, host: dsnOptions.hostname
+      else
+        clientOptions = path: dsnOptions.path
+
+    client = dnode.connect clientOptions
     group = @_group
     self = this
 
-    _bindMethods = (methods = {}) ->
-      for name of methods
-        [_group, _methods...] = name.split('.')
+    client.on 'remote', (remote) ->
+      self._remote = remote
+      for name of remote
+        [_group, _methods...] = name.split('__')
         continue unless _group is group
         do (_methods) ->
           self[_methods[0]] or= {}
@@ -32,20 +38,26 @@ class Rpc extends EventEmitter
             args = (v for k, v of arguments)
             args.unshift _methods.join '.'
             self.call.apply self, args
-      return self
-
-    @methods (err, methods) ->
-      _bindMethods methods
-      self.emit 'bind', err
-      callback err, methods
+      self.emit 'bind'
+      return
 
     return this
 
   call: (method) ->
-    method = "#{@_group}.#{method}"
+    method = method.replace /\./g, '__'
+    method = "#{@_group}__#{method}"
     arguments[0] = method
-    @_client.call.apply @_client, arguments
 
-  methods: -> @_client.methods.apply @_client, arguments
+    if toString.call(arguments[arguments.length - 1]) is '[object Function]'
+      callback = arguments[arguments.length - 1]
+      _callback = (err) ->
+        if err?.stack and err?.message
+          _err = new Error(err.message)
+          _err.stack = err.stack
+          return callback _err
+        callback.apply this, arguments
+      arguments[arguments.length - 1] = _callback
+
+    @_remote[method].apply @_remote, Array.prototype.slice.call(arguments, 1)
 
 module.exports = Rpc

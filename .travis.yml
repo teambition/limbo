@@ -2,6 +2,8 @@ language: node_js
 node_js:
   - "0.10"
   - "0.11"
-env: MONGO_DSN="localhost/test"
+  - "0.12"
+env:
+  - MONGO_DSN="localhost/test"
 services:
   - mongodb
