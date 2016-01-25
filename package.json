@@ -30,7 +30,7 @@
     "should": "^4.0.4"
   },
   "dependencies": {
-    "axon-rpc": "0.0.3",
-    "axon": "^2.0.1"
+    "axon-rpc": "orangemi/axon-rpc#feature/add-auth",
+    "axon": "orangemi/axon#feature/add-source"
   }
 }

@@ -1,18 +1,14 @@
+debug = require('debug')('limbo-mongo')
 axon = require 'axon'
 rpc = require 'axon-rpc'
 limbo = require '../limbo'
+rep = axon.socket 'rep'
 
-rpcServerMap = {}
-getRpcServer = (port) ->
-  port = Number(port)
-  arguments[0] = port
-  unless rpcServerMap[port]
-    rep = axon.socket 'rep'
-    rpcServerMap[port] = server = new rpc.Server rep
-    rep.bind.apply rep, arguments
-  return rpcServerMap[port]
 
 class Mongo
+  getRpcServer: (port) ->
+    return @rpcServer if @rpcServer
+    @rpcServer = new rpc.Server rep
 
   constructor: (options) ->
     {conn, group, methods, statics, overwrites, schemas, rpcPort} = options
@@ -103,7 +99,7 @@ class Mongo
   # Every model method will be exposed as 'group.model.method'
   # e.g. UserModel.findOne in group 'local' will be exposed as 'local.user.findOne'
   bindRpcEvent: (modelKey) ->
-    server = getRpcServer @_rpcPort
+    server = @getRpcServer()
     group = @_group
     models = @_models
     model = models[modelKey]
@@ -113,8 +109,9 @@ class Mongo
     # For example: db.user.on 'findOne', (err, user) ->
     _bindMethod = (methodName) ->
       eventName = "#{group}.#{modelKey}.#{methodName}"
+      debug(eventName)
       server.expose eventName, ->
-
+        sock = this
         _emit = ->
           modelArgs = (v for k, v of arguments)
           modelArgs.unshift methodName
@@ -122,7 +119,7 @@ class Mongo
 
           # Emit wild broadcast message
           limboArgs = (v for k, v of arguments)
-          limboArgs.unshift '*', eventName
+          limboArgs.unshift '*', eventName, sock
           limbo.emit.apply limbo, limboArgs
 
         callback = arguments[arguments.length - 1]
@@ -149,5 +146,11 @@ class Mongo
       _bindMethod methodName
 
     this
+
+  listen : (callback = ->) ->
+    return if not @_rpcPort
+    # Bind to rpc port
+    port = Number(@_rpcPort)
+    rep.bind(port, callback)
 
 module.exports = Mongo
