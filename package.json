@@ -1,6 +1,6 @@
 {
   "name": "limbo",
-  "version": "0.3.3",
+  "version": "0.3.5",
   "description": "Factory/Loader of mongoose",
   "main": "./lib/limbo.js",
   "directories": {
@@ -30,7 +30,7 @@
     "should": "^4.0.4"
   },
   "dependencies": {
-    "axon-rpc": "orangemi/axon-rpc#feature/add-auth",
-    "axon": "orangemi/axon#feature/add-source"
+    "axon-rpc": "orangemi/axon-rpc",
+    "axon": "orangemi/axon"
   }
 }
