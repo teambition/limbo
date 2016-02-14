@@ -1,13 +1,12 @@
-debug = require('debug')('limbo-mongo')
 axon = require 'axon'
 rpc = require 'axon-rpc'
 limbo = require '../limbo'
-rep = axon.socket 'rep'
+{EventEmitter} = require 'events'
 
-
-class Mongo
-  getRpcServer: (port) ->
+class Mongo extends EventEmitter
+  getRpcServer: (port, opt) ->
     return @rpcServer if @rpcServer
+    rep = axon.socket 'rep'
     @rpcServer = new rpc.Server rep
 
   constructor: (options) ->
@@ -103,13 +102,13 @@ class Mongo
     group = @_group
     models = @_models
     model = models[modelKey]
+    self = this
 
     # Bind rpc method and emit an event on each model when the callback be called
     # The pattern of event name is the method name
     # For example: db.user.on 'findOne', (err, user) ->
     _bindMethod = (methodName) ->
       eventName = "#{group}.#{modelKey}.#{methodName}"
-      debug(eventName)
       server.expose eventName, ->
         sock = this
         _emit = ->
@@ -117,10 +116,9 @@ class Mongo
           modelArgs.unshift methodName
           model.emit.apply model, modelArgs
 
-          # Emit wild broadcast message
-          limboArgs = (v for k, v of arguments)
-          limboArgs.unshift '*', eventName, sock
-          limbo.emit.apply limbo, limboArgs
+          rpcEvents = Array.apply(null, arguments)
+          rpcEvents.unshift 'rpc', eventName, sock
+          self.emit.apply(self, rpcEvents)
 
         callback = arguments[arguments.length - 1]
         if typeof callback is 'function'
@@ -147,10 +145,11 @@ class Mongo
 
     this
 
-  listen : (callback = ->) ->
+  listen : (options = {}, callback = ->) ->
     return if not @_rpcPort
     # Bind to rpc port
     port = Number(@_rpcPort)
-    rep.bind(port, callback)
+    @rpcServer.sock.set('tls', options.tls) if options.tls
+    @rpcServer.sock.bind(port, callback)
 
 module.exports = Mongo

@@ -1,7 +1,4 @@
-{EventEmitter} = require 'events'
-
-class Limbo extends EventEmitter
-
+class Limbo
   constructor: ->
     @_providers = {}
 

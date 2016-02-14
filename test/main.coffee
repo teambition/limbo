@@ -22,7 +22,6 @@ cleanup = (done) -> conn.db.dropDatabase done
 describe 'Limbo', ->
 
   describe 'LoadSchema', ->
-
     # Get mongoose schemas and initial mongo provider
     it 'should load schemas', ->
       _limbo = new Limbo
@@ -33,7 +32,6 @@ describe 'Limbo', ->
       dbGroup.should.have.properties 'user', 'UserModel'
 
   describe 'MongoProvider', ->
-
     # Create user
     it 'should create user by mongo provider', (done) ->
       _limbo = new Limbo
@@ -49,9 +47,7 @@ describe 'Limbo', ->
         done err
 
   describe 'RpcProvider', ->
-
     _server = null
-
     # Initialize the rpc server
     before (done) ->
       _limbo = new Limbo
@@ -59,6 +55,7 @@ describe 'Limbo', ->
         conn: conn
         schemas: User: UserSchema
         rpcPort: 7001
+      _server.listen()
       done()
 
     # Enable rpc server
@@ -70,7 +67,7 @@ describe 'Limbo', ->
         conn: rpcDsn
 
       # Emit `bind` event when the methods are bound to the client
-      dbGroup.on 'bind', (err) ->
+      dbGroup.connect rpcDsn, (err) ->
         dbGroup.should.have.properties 'user'
         dbGroup.user.findOne name: 'Alice', _callback
 
@@ -87,12 +84,28 @@ describe 'Limbo', ->
         name: 'Alice'
       , _callback
 
-  describe 'CustomMethods', ->
+    # Enable rpc server
+    # Call rpc methods and emit an event of same name in server side
+    it 'should call rpc method and get back the user named Alice with Async', (done) ->
+      _limbo = new Limbo
+      dbGroup = _limbo.use 'test',
+        provider: 'rpc'
 
+      # Emit `bind` event when the methods are bound to the client
+      dbGroup.connect rpcDsn, (err) ->
+        dbGroup.should.have.properties 'user'
+        dbGroup.user.findOneAsync(name: 'Alice').then((user) ->
+          _callback(null, user)
+        )
+
+      _callback = (err, user) ->
+        user.should.have.properties '_id', 'name', 'email'
+        done()
+
+  describe 'CustomMethods', ->
     it 'should define a static method and bind it to all the models', (done) ->
 
       _limbo = new Limbo
-
       statics = createDog: (callback) -> @create {type: 'dog', age: 1}, callback
 
       dbGroup = _limbo.use 'test',
@@ -121,9 +134,7 @@ describe 'Limbo', ->
       done()
 
     it 'should define an pre method and bind it to all the schemas', (done) ->
-
       _limbo = new Limbo
-
       # The embed hooks should also work
       PetSchema.pre 'save', (next) ->
         @age += 1
@@ -149,27 +160,20 @@ describe 'Limbo', ->
       promise.constructor.name.should.eql 'Promise'
 
   describe 'MultiPorts', ->
-
     _server = null
-
     before ->
       _server = limbo.use 'test1',
         conn: conn
         schemas: Pet: PetSchema
         rpcPort: 7002
+      _server.listen()
 
     it 'should connect to different ports in different groups', (done) ->
-
       _limbo = new Limbo
-
       dbGroup1 = _limbo.use 'test',
         provider: 'rpc'
-        conn: 'tcp://localhost:7001'
-
       dbGroup2 = _limbo.use 'test1',
         provider: 'rpc'
-        conn: 'tcp://localhost:7002'
-
       num = 0
       _callback = (methods, match, notMatch) ->
         num += 1
@@ -178,7 +182,9 @@ describe 'Limbo', ->
           method.should.not.match notMatch
         done() if num is 2
 
-      dbGroup1.methods (err, methods) -> _callback methods, /^test\.user/, /^test1\.pet/
-      dbGroup2.methods (err, methods) -> _callback methods, /^test1\.pet/, /^test\.user/
+      dbGroup1.connect 'tcp://localhost:7001', ->
+        dbGroup1.methods (err, methods) -> _callback methods, /^test\.user/, /^test1\.pet/
+      dbGroup2.connect 'tcp://localhost:7002', ->
+        dbGroup2.methods (err, methods) -> _callback methods, /^test1\.pet/, /^test\.user/
 
   after cleanup
