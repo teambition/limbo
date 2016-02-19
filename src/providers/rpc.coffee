@@ -49,7 +49,7 @@ class Rpc extends EventEmitter
       return self
 
     @methods (err, methods) ->
-      return callback(err) if err
+      return self.emit('error', err) if err
       _bindMethods methods
       callback err, methods
       self.emit 'connect'
