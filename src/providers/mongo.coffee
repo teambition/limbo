@@ -1,4 +1,4 @@
-axon = require 'axon'
+axon = require 'axon-tls'
 rpc = require 'axon-rpc'
 limbo = require '../limbo'
 {EventEmitter} = require 'events'

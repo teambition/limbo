@@ -1,9 +1,9 @@
-axon = require 'axon'
+axon = require 'axon-tls'
 rpc = require 'axon-rpc'
 {EventEmitter} = require 'events'
 
 getRpcClient = (conn, options = {}) ->
-  req = axon.socket 'req'
+  req = axon.socket 'req', heartbeat: true
   client = new rpc.Client req
   req.set('tls', options.tls) if options.tls
   req.set('max retry', 10)
