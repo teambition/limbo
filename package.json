@@ -31,6 +31,6 @@
   },
   "dependencies": {
     "axon-rpc": "github:orangemi/axon-rpc",
-    "axon-tls": "^2.2.0"
+    "axon-tls": "^2.2.1"
   }
 }
